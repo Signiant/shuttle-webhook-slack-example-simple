@@ -1,28 +1,16 @@
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser');
-var slackUtils = require('./SlackUtils.js');
+require('dotenv').config({path: './.env.dev'})
+const express = require('express');
+// const bodyParser = require('body-parser');
+const prettyBytes = require('pretty-bytes')
+const slackUtils = require('@slack/web-api');
 
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false}))
+// app.use(bodyParser.json()); // support json encoded bodies
+// app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 
-const convertBytes = function(bytes) {
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
-
-    if (bytes == 0) {
-        return "n/a"
-    }
-
-    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-
-    if (i == 0) {
-        return bytes + " " + sizes[i]
-    }
-
-    return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i]
-}
-
-app.post('/TransferUpdate', (req, res) => {
+app.post('/event', (req, res) => {
     console.log(JSON.stringify(req.body, null, 4));
     let transferObj = JSON.parse(JSON.stringify(req.body, null, 4));
 
@@ -39,19 +27,19 @@ app.post('/TransferUpdate', (req, res) => {
         transferObj.payload.packageDetails.files.forEach(filename => {
             if (firstOne) {
                 if (basePath) {
-                    filenames += basePath + "/" + filename.path + " (" + convertBytes(filename.size) + ")";
+                    filenames += basePath + "/" + filename.path + " (" + prettyBytes(filename.size) + ")";
                 }
                 else {
-                    filenames += filename.path + " (" + convertBytes(filename.size) + ")";
+                    filenames += filename.path + " (" + prettyBytes(filename.size) + ")";
                 }
                 firstOne = false;
             }
             else {
                 if (basePath) {
-                    filenames += "\n" + basePath + "/" + filename.path + " (" + convertBytes(filename.size) + ")";
+                    filenames += "\n" + basePath + "/" + filename.path + " (" + prettyBytes(filename.size) + ")";
                 }
                 else {
-                    filenames += "\n" + filename.path + " (" + convertBytes(filename.size) + ")";
+                    filenames += "\n" + filename.path + " (" + prettyBytes(filename.size) + ")";
                 }
             }
 //            console.log(filename.path);
@@ -97,3 +85,21 @@ var server = app.listen(8081, function () {
     console.log("Example app listening at http://%s:%s", host, port)
     //slackUtils.sendMessage("Testing");
 })
+
+
+
+// const convertBytes = function(bytes) {
+//     const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
+
+//     if (bytes == 0) {
+//         return "n/a"
+//     }
+
+//     const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+
+//     if (i == 0) {
+//         return bytes + " " + sizes[i]
+//     }
+
+//     return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i]
+// }
